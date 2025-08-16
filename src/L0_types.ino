@@ -24,3 +24,21 @@ using f64_t   = double;
 using any_t   = std::any;
 using str_t   = std::string;
 using usize_t = std::size_t; 
+
+// GROUP
+gent_t using vec = std::vector<T>;
+gent_t using set = std::unordered_set<T>;
+
+gentn_t using arr = std::array<T, N>;
+gents_t using tup = std::tuple<Ts...>;
+genkv_t using dic = std::unordered_map<K, V>;
+
+// LISTS
+gent_t using lst = std::list<T>;
+gent_t using stk = std::stack<T>;
+gent_t using seq = std::queue<T>;
+gent_t using deq = std::deque<T>;
+
+// HEAPS
+gent_t using maxheap = std::priority_queue<T>;
+gent_t using minheap = std::priority_queue<T, std::vector<T>, std::greater<T>>;
