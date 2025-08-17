@@ -6,7 +6,7 @@ public:
   int adc() const { return analogRead(gpio); }
   int get() const { return digitalRead(gpio); }
 
-  void  dac(int val)           const { dacWrite(gpio, val); }
+//  void  dac(int val)           const { dacWrite(gpio, val); }
   void  pwm(int val)           const { ledcWrite(gpio, val); }
   void  set(int val)           const { digitalWrite(gpio, val); }
   void freq(int val, int time) const { ledcWriteTone(gpio, val); delay(time); }
@@ -33,13 +33,25 @@ public:
 template<int N>
 class PINS {
 public:
-  arr<PIN, N> gpios;
+  arr<PIN, N> pins;
 
-  gents_t PINS(Ts... args) : gpios{ PIN(args)... } {}
+  gents_t PINS(Ts... args) : pins{ PIN(args)... } {}
 
-  constexpr int size()           const { return gpios.size(); }
-  PIN& operator[](int idx)             { return gpios[idx]; }
-  const PIN& operator[](int idx) const { return gpios[idx]; }
+  constexpr int size()           const { return pins.size(); }
+  PIN& operator[](int idx)             { return pins[idx]; }
+  const PIN& operator[](int idx) const { return pins[idx]; }
+
+  void set(int val) const { for (auto& p : pins) p.set(val); }
+  void pwm(int val) const { for (auto& p : pins) p.pwm(val); }
+
+  void input()      const { for (auto& p : pins) p.input(); }
+  void output()     const { for (auto& p : pins) p.output(); }
+  void pullup()     const { for (auto& p : pins) p.pullup(); }
+  void pulldown()   const { for (auto& p : pins) p.pulldown(); }
+  void opendrain()  const { for (auto& p : pins) p.opendrain(); }
+
+  void pwmio(int res, int freq)               const { for (auto& p : pins) p.pwmio(res, freq); }
+  void adcio(int res, adc_attenuation_t attn) const { for (auto& p : pins) p.adcio(res, attn); }
 };
 //==========================================================
 gents_t PINS(Ts... args) -> PINS<sizeof...(Ts)>; // auto-detect args number
