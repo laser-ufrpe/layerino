@@ -1,33 +1,45 @@
 class PIN {
 public:
-  usize_t gpio;
-  usize_t ledc;
-  PIN(usize_t arg) : gpio(arg) {}
+  int gpio;
+  PIN(int arg) : gpio(arg) {}
 
-  void input()     const { pinMode(gpio, INPUT); }
-  void output()    const { pinMode(gpio, OUTPUT); }
-  void pullup()    const { pinMode(gpio, INPUT_PULLUP); }
-  void pulldown()  const { pinMode(gpio, INPUT_PULLDOWN); }
-  void opendrain() const { pinMode(gpio, OUTPUT_OPEN_DRAIN); }
+  int adc() const { return analogRead(gpio); }
+  int get() const { return digitalRead(gpio); }
 
-  void low()             const { digitalWrite(gpio, LOW); }
-  void high()            const { digitalWrite(gpio, HIGH); }
-  void dac(usize_t val)  const { dacWrite(gpio, val); }
-  void dig(usize_t val)  const { digitalWrite(gpio, val); }
+  void  dac(int val)           const { dacWrite(gpio, val); }
+  void  pwm(int val)           const { ledcWrite(gpio, val); }
+  void  set(int val)           const { digitalWrite(gpio, val); }
+  void freq(int val, int time) const { ledcWriteTone(gpio, val); delay(time); }
 
-  i32_t adc() const { return analogRead(gpio); }
+  void input()      const { pinMode(gpio, INPUT); }
+  void output()     const { pinMode(gpio, OUTPUT); }
+  void pullup()     const { pinMode(gpio, INPUT_PULLUP); }
+  void pulldown()   const { pinMode(gpio, INPUT_PULLDOWN); }
+  void opendrain()  const { pinMode(gpio, OUTPUT_OPEN_DRAIN); }
+
+  void pwmio(int res, int freq) const {
+    pinMode(gpio, OUTPUT);
+    ledcAttach(gpio, freq, res);
+  }
+
+  void adcio(int res, adc_attenuation_t attn) const {
+    pinMode(gpio, INPUT);
+    analogReadResolution(res);
+    analogSetAttenuation(attn);
+  }
 };
+
 //==========================================================
-template<usize_t N>
+template<int N>
 class PINS {
 public:
   arr<PIN, N> gpios;
 
   gents_t PINS(Ts... args) : gpios{ PIN(args)... } {}
 
-  constexpr usize_t size() const           { return gpios.size(); }
-  PIN& operator[](usize_t idx)             { return gpios[idx]; }
-  const PIN& operator[](usize_t idx) const { return gpios[idx]; }
+  constexpr int size()           const { return gpios.size(); }
+  PIN& operator[](int idx)             { return gpios[idx]; }
+  const PIN& operator[](int idx) const { return gpios[idx]; }
 };
 //==========================================================
-gents_t PINS(Ts... args) -> PINS<sizeof...(Ts)>;
+gents_t PINS(Ts... args) -> PINS<sizeof...(Ts)>; // auto-detect args number
