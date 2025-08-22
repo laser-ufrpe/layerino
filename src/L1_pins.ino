@@ -33,9 +33,10 @@ public:
 template<int N>
 class PINS {
 public:
-  arr<PIN, N> pins;
+  std::array<PIN, N> pins;
 
-  gents_t PINS(Ts... args) : pins{ PIN(args)... } {}
+  template<typename... Ts>
+  PINS(Ts... args) : pins{ PIN(args)... } {}
 
   constexpr int size()           const { return pins.size(); }
   PIN& operator[](int idx)             { return pins[idx]; }
@@ -54,4 +55,5 @@ public:
   void adcio(int res, adc_attenuation_t attn) const { for (auto& p : pins) p.adcio(res, attn); }
 };
 //==========================================================
-gents_t PINS(Ts... args) -> PINS<sizeof...(Ts)>; // auto-detect args number
+template<typename... Ts>
+PINS(Ts... args) -> PINS<sizeof...(Ts)>; // auto-detect args number
