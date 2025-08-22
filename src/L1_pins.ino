@@ -61,6 +61,12 @@ public:
 
   void pwmio(int res, int freq)               const { for (auto& p : pins) p.pwmio(res, freq); }
   void adcio(int res, adc_attenuation_t attn) const { for (auto& p : pins) p.adcio(res, attn); }
+  
+  std::array<int, N> get() const {
+    std::array<int, N> states{};
+    for (int i = 0; i < N; i++) { states[i] = pins[i].get(); }
+    return states;
+  }
 };
 //==========================================================
 template<typename... Ts>
