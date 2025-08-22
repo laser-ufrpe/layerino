@@ -45,6 +45,14 @@ public:
   void set(int val) const { for (auto& p : pins) p.set(val); }
   void pwm(int val) const { for (auto& p : pins) p.pwm(val); }
 
+  template<typename... Ts>
+  void pwm(Ts... vals) const {
+    int values[] = { vals... };
+    for (int i = 0; i < N; i++) {
+      pins[i].pwm(values[i]);
+    }
+  }
+
   void input()      const { for (auto& p : pins) p.input(); }
   void output()     const { for (auto& p : pins) p.output(); }
   void pullup()     const { for (auto& p : pins) p.pullup(); }
