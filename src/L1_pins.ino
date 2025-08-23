@@ -42,7 +42,12 @@ public:
   PIN& operator[](int idx)             { return pins[idx]; }
   const PIN& operator[](int idx) const { return pins[idx]; }
 
-  void set(int val) const { for (auto& p : pins) p.set(val); }
+  void set(int bitmask) {
+    for(int i = N-1; i > -1; i--) {
+      pins[i].set(bitmask & 1);
+      bitmask = bitmask>>1;}
+  }
+
   void pwm(int val) const { for (auto& p : pins) p.pwm(val); }
 
   template<typename... Ts>
