@@ -42,3 +42,14 @@ gent_t using deq = std::deque<T>;
 // HEAPS
 gent_t using maxheap = std::priority_queue<T>;
 gent_t using minheap = std::priority_queue<T, std::vector<T>, std::greater<T>>;
+
+// ========================================================
+class DEBUG {
+public:
+
+  String bin(int num, int zeros) {
+    String formatBin = "";
+    for (int i = zeros - 1; i >= 0; i--) { formatBin += String((num >> i) & 1); }
+    return formatBin;
+  }
+};
