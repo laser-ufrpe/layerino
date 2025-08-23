@@ -72,6 +72,13 @@ public:
     for (int i = 0; i < N; i++) { states[i] = pins[i].get(); }
     return states;
   }
+  std::array<int, N> adc() const {
+  std::array<int, N> values{};
+    for (int i = 0; i < N; i++) {
+      values[i] = pins[i].adc();
+    }
+    return values;
+  }
 };
 //==========================================================
 template<typename... Ts>
