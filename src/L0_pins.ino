@@ -34,7 +34,8 @@ public:
 template<int N>
 class PINS {
 public:
-  arr<PIN, N> pins;
+  arr< PIN, N >        pins;
+  arr< int, 1<<(N-1) > muxseq;
 
   constexpr int size()           const { return pins.size(); }
   PIN& operator[](int idx)             { return pins[idx]; }
@@ -46,6 +47,17 @@ public:
     for (int i = 0; i < N; i++) {
       pins[i].pwm(values[i]);
     }
+  }
+//==========================================================
+  gents_t void dmuxio(int res, adc_attenuation_t attn, Ts... order) {
+    muxseq = { order... };
+    pins[0].output();
+    for (int i = 1; i < N; i++) pins[i].output();
+  }
+  gents_t void amuxio(int res, adc_attenuation_t attn, Ts... order) {
+    muxseq = { order... };
+    pins[0].adcio(res, attn);
+    for (int i = 1; i < N; i++) pins[i].output();
   }
 //==========================================================
   void input()      const { for (auto& p : pins) p.input(); }
