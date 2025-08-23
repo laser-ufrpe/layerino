@@ -44,23 +44,74 @@ gent_t using maxheap = std::priority_queue<T>;
 gent_t using minheap = std::priority_queue<T, std::vector<T>, std::greater<T>>;
 
 // ========================================================
-template<int TAM>
 class DEBUG {
+  private:
+  BluetoothSerial bluetooth;
+  bool isConnected;
+  String deviceName;
 public:
-  std::vector<int> timers;  
-
-  DEBUG() : timers(TAM) {}  
-
+  DEBUG() : isConnected(false), deviceName("") {}
 
   String bin(int num, int zeros) {
     String formatBin = "";
-    for (int i = zeros - 1; i >= 0; i--) {
-      formatBin += String((num >> i) & 1);
-    }
+    for (int i = zeros - 1; i >= 0; i--) { formatBin += String((num >> i) & 1); }
     return formatBin;
   }
 
-  void timer(int timer) { timers[timer] = micros();}
-  void timerend(int timer) { timers[timer] = micros() - timers[timer];}
-  int timerget(int timer) { return timers[timer];}
+  void ble(String name) {
+    deviceName = name;
+    
+    if (!bluetooth.begin(name)) {
+      Serial.println("Erro: Bluetooth não pode ser iniciado");
+      isConnected = false;
+      return;
+    }
+    
+    Serial.println(name + "Iniciado");
+    Serial.println("Aguardando conexão...");
+
+    unsigned long startTime = millis();
+    while (!bluetooth.hasClient() && (millis() - startTime) < 30000) {
+      delay(100);
+    }
+    
+    if (bluetooth.hasClient()) {
+      isConnected = true;
+      Serial.println("Bluetooth conectado");
+      bsend("=== DEBUG BLUETOOTH CONECTADO ===");
+    } else {
+      Serial.println("Timeout");
+      isConnected = false;
+    }
+  }
+
+  String bget() {
+    if (!isConnected || !bluetooth.hasClient()) {
+      return "";
+    }
+    
+    String receivedData = "";
+    while (bluetooth.available()) {
+      char c = bluetooth.read();
+      if (c == '\n' || c == '\r') {
+        if (receivedData.length() > 0) {
+          break;
+        }
+      } else {
+        receivedData += c;
+      }
+    }
+    
+    return receivedData;
+  }
+
+  void bsend(String msg) {
+    if (!isConnected || !bluetooth.hasClient()) {
+      Serial.println("BT não conectado: " + msg);
+      return;
+    }
+    
+    bluetooth.println(msg);
+    Serial.println("BT-OUT: " + msg);
+  }
 };
