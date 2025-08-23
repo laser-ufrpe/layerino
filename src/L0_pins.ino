@@ -6,7 +6,7 @@ public:
   int adc() const { return analogRead(gpio); }
   int get() const { return digitalRead(gpio); }
 
-//  void  dac(int val)           const { dacWrite(gpio, val); }
+  void  dac(int val)           const { dacWrite(gpio, val); }
   void  pwm(int val)           const { ledcWrite(gpio, val); }
   void  set(int val)           const { digitalWrite(gpio, val); }
   void freq(int val, int time) const { ledcWriteTone(gpio, val); delay(time); }
@@ -28,36 +28,26 @@ public:
     analogSetAttenuation(attn);
   }
 };
-
+//==========================================================
+//                   MULTIPLE PINS CLASS
 //==========================================================
 template<int N>
 class PINS {
 public:
-  std::array<PIN, N> pins;
-
-  template<typename... Ts>
-  PINS(Ts... args) : pins{ PIN(args)... } {}
+  arr<PIN, N> pins;
 
   constexpr int size()           const { return pins.size(); }
   PIN& operator[](int idx)             { return pins[idx]; }
   const PIN& operator[](int idx) const { return pins[idx]; }
 
-  void set(int bitmask) {
-    for(int i = N-1; i > -1; i--) {
-      pins[i].set(bitmask & 1);
-      bitmask = bitmask>>1;}
-  }
-
-  void pwm(int val) const { for (auto& p : pins) p.pwm(val); }
-
-  template<typename... Ts>
-  void pwm(Ts... vals) const {
+  gents_t PINS(Ts... args) : pins{ PIN(args)... } {}
+  gents_t void pwm(Ts... vals) const {
     int values[] = { vals... };
     for (int i = 0; i < N; i++) {
       pins[i].pwm(values[i]);
     }
   }
-
+//==========================================================
   void input()      const { for (auto& p : pins) p.input(); }
   void output()     const { for (auto& p : pins) p.output(); }
   void pullup()     const { for (auto& p : pins) p.pullup(); }
@@ -67,13 +57,21 @@ public:
   void pwmio(int res, int freq)               const { for (auto& p : pins) p.pwmio(res, freq); }
   void adcio(int res, adc_attenuation_t attn) const { for (auto& p : pins) p.adcio(res, attn); }
   
-  std::array<int, N> get() const {
-    std::array<int, N> states{};
+  void set(int bitmask) {
+    for(int i = N-1; i > -1; i--) {
+      pins[i].set(bitmask & 1);
+      bitmask = bitmask>>1;
+    }
+  }
+//==========================================================
+  arr<int, N> get() const {
+    arr<int, N> states{};
     for (int i = 0; i < N; i++) { states[i] = pins[i].get(); }
     return states;
   }
-  std::array<int, N> adc() const {
-  std::array<int, N> values{};
+
+  arr<int, N> adc() const {
+    arr<int, N> values{};
     for (int i = 0; i < N; i++) {
       values[i] = pins[i].adc();
     }
@@ -81,5 +79,4 @@ public:
   }
 };
 //==========================================================
-template<typename... Ts>
-PINS(Ts... args) -> PINS<sizeof...(Ts)>; // auto-detect args number
+gents_t PINS(Ts... args) -> PINS<sizeof...(Ts)>; // auto-detect args number
