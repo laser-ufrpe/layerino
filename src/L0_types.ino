@@ -44,12 +44,23 @@ gent_t using maxheap = std::priority_queue<T>;
 gent_t using minheap = std::priority_queue<T, std::vector<T>, std::greater<T>>;
 
 // ========================================================
+template<int TAM>
 class DEBUG {
 public:
+  std::vector<int> timers;  
+
+  DEBUG() : timers(TAM) {}  
+
 
   String bin(int num, int zeros) {
     String formatBin = "";
-    for (int i = zeros - 1; i >= 0; i--) { formatBin += String((num >> i) & 1); }
+    for (int i = zeros - 1; i >= 0; i--) {
+      formatBin += String((num >> i) & 1);
+    }
     return formatBin;
   }
+
+  void timer(int timer) { timers[timer] = micros();}
+  void timerend(int timer) { timers[timer] = micros() - timers[timer];}
+  int timerget(int timer) { return timers[timer];}
 };
