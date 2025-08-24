@@ -31,20 +31,20 @@ public:
 //==========================================================
 //                   MULTIPLE PINS CLASS
 //==========================================================
-template<int MuxQt, int PinQt, int MuxIOs =  1 << (PinQt-MuxQt)>
+template<int MuxQt, int PinQt, int MuxIOs =  1 << (PinQt-MuxQt), int MuxBuf = MuxIOs*MuxQt>
 class PINS {
 public:
+  int muxint;
   arr< PIN, PinQt> pins;
   arr< int, PinQt> pinbuf;
   arr< int, MuxIOs> muxseq;
-  arr< int, MuxIOs*MuxQt> muxbuf;
+  arr< int, MuxBuf> muxbuf;
 
   constexpr int size()           const { return pins.size(); }
   PIN& operator[](int idx)             { return pins[idx]; }
   const PIN& operator[](int idx) const { return pins[idx]; }
 
-  template<typename... Ts>
-  PINS(Ts... args) : pins{ PIN(args)... } {}
+  gents_t PINS(Ts... args) : pins{ PIN(args)... } {}
 
   gents_t void pwm(Ts... vals) const {
     int values[] = { vals... };
@@ -65,10 +65,13 @@ public:
   }
 //==========================================================
   void muxget() {
+    muxint = 0;
     for (int i = 0; i < MuxIOs; i++) {
       set(1, muxseq[i]);
+      int shift_base = MuxBuf-1-i;
+
       for (int j = 0; j < MuxQt; j++)
-        muxbuf[i+j*MuxIOs] = pins[j].get();
+        muxint |= (pins[j].get() << (shift_base-j*MuxIOs));
     }
   }
   void muxadc() {
@@ -104,5 +107,4 @@ public:
   }
 };
 //==========================================================
-template<typename... PinList>
-PINS(PinList... args) -> PINS<1, sizeof...(PinList)>;
+gents_t PINS(Ts... args) -> PINS<1, sizeof...(Ts)>;
