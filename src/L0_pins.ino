@@ -31,50 +31,52 @@ public:
 //==========================================================
 //                   MULTIPLE PINS CLASS
 //==========================================================
-template<int N, int K = (1 << (N-1))>
+template<int MuxQt, int PinQt, int MuxIOs =  1 << (PinQt-MuxQt)>
 class PINS {
 public:
-  arr< PIN, N> pins;
-  arr< int, K> muxseq;
+  arr< PIN, PinQt> pins;
+  arr< int, PinQt> pinbuf;
+  arr< int, MuxIOs> muxseq;
+  arr< int, MuxIOs*MuxQt> muxbuf;
 
   constexpr int size()           const { return pins.size(); }
   PIN& operator[](int idx)             { return pins[idx]; }
   const PIN& operator[](int idx) const { return pins[idx]; }
 
-  gents_t PINS(Ts... args) : pins{ PIN(args)... } {}
+  template<typename... Ts>
+  PINS(Ts... args) : pins{ PIN(args)... } {}
+
   gents_t void pwm(Ts... vals) const {
     int values[] = { vals... };
-    for (int i = 0; i < N; i++) {
+    for (int i = 0; i < PinQt; i++) {
       pins[i].pwm(values[i]);
     }
   }
 //==========================================================
   gents_t void dmuxio(int mode, Ts... order) {
     muxseq = { order... };
-    pinMode(pins[0].gpio, mode);
-    for (int i = 1; i < N; i++) pins[i].output();
+    for (int i = 0; i < MuxQt; i++) pinMode(pins[i].gpio, mode);
+    for (int i = MuxQt; i < PinQt; i++) pins[i].output();
   }
   gents_t void amuxio(int res, adc_attenuation_t attn, Ts... order) {
     muxseq = { order... };
-    pins[0].adcio(res, attn);
-    for (int i = 1; i < N; i++) pins[i].output();
+    for (int i = 0; i < MuxQt; i++) pins[i].adcio(res, attn);
+    for (int i = MuxQt; i < PinQt; i++) pins[i].output();
   }
 //==========================================================
-  arr<int, K> muxget() {
-    arr<int, K> buf;
-    for (int i = 0; i < K; i++) {
+  void muxget() {
+    for (int i = 0; i < MuxIOs; i++) {
       set(1, muxseq[i]);
-      buf[i] = pins[0].get();
+      for (int j = 0; j < MuxQt; j++)
+        muxbuf[i+j*MuxIOs] = pins[j].get();
     }
-    return buf;
   }
-  arr<int, K> muxadc() {
-    arr<int, K> buf;
-    for (int i = 0; i < K; i++) {
+  void muxadc() {
+    for (int i = 0; i < MuxIOs; i++) {
       set(1, muxseq[i]);
-      buf[i] = pins[0].adc();
+      for (int j = 0; j < MuxQt; j++)
+        muxbuf[i+j*MuxIOs] = pins[j].adc();
     }
-    return buf;
   }
 //==========================================================
   void input()      const { for (auto& p : pins) p.input(); }
@@ -87,25 +89,20 @@ public:
   void adcio(int res, adc_attenuation_t attn) const { for (auto& p : pins) p.adcio(res, attn); }  
 //==========================================================
   void set(int firstpin, int bitmask) {
-    for(int i = N-1; i >= firstpin; i--) {
+    for(int i = PinQt-1; i >= firstpin; i--) {
       pins[i].set(bitmask & 1);
       bitmask = bitmask>>1;
     }
   }
 //==========================================================
-  arr<int, N> get() const {
-    arr<int, N> states{};
-    for (int i = 0; i < N; i++) { states[i] = pins[i].get(); }
-    return states;
+  void get() const {
+    for (int i = 0; i < PinQt; i++) { pinbuf[i] = pins[i].get(); }
   }
 
-  arr<int, N> adc() const {
-    arr<int, N> values{};
-    for (int i = 0; i < N; i++) {
-      values[i] = pins[i].adc();
-    }
-    return values;
+  void adc() const {
+    for (int i = 0; i < PinQt; i++) { pinbuf[i] = pins[i].adc(); }
   }
 };
 //==========================================================
-gents_t PINS(Ts... args) -> PINS<sizeof...(Ts)>; // auto-detect args number
+template<typename... PinList>
+PINS(PinList... args) -> PINS<1, sizeof...(PinList)>;
