@@ -31,11 +31,11 @@ public:
 //==========================================================
 //                   MULTIPLE PINS CLASS
 //==========================================================
-template<int N>
+template<int N, int K = (1 << (N-1))>
 class PINS {
 public:
-  arr< PIN, N >        pins;
-  arr< int, 1<<(N-1) > muxseq;
+  arr< PIN, N> pins;
+  arr< int, K> muxseq;
 
   constexpr int size()           const { return pins.size(); }
   PIN& operator[](int idx)             { return pins[idx]; }
@@ -49,15 +49,32 @@ public:
     }
   }
 //==========================================================
-  gents_t void dmuxio(int res, adc_attenuation_t attn, Ts... order) {
+  gents_t void dmuxio(int mode, Ts... order) {
     muxseq = { order... };
-    pins[0].output();
+    pinMode(pins[0].gpio, mode);
     for (int i = 1; i < N; i++) pins[i].output();
   }
   gents_t void amuxio(int res, adc_attenuation_t attn, Ts... order) {
     muxseq = { order... };
     pins[0].adcio(res, attn);
     for (int i = 1; i < N; i++) pins[i].output();
+  }
+//==========================================================
+  arr<int, K> muxget() {
+    arr<int, K> buf;
+    for (int i = 0; i < K; i++) {
+      set(1, muxseq[i]);
+      buf[i] = pins[0].get();
+    }
+    return buf;
+  }
+  arr<int, K> muxadc() {
+    arr<int, K> buf;
+    for (int i = 0; i < K; i++) {
+      set(1, muxseq[i]);
+      buf[i] = pins[0].adc();
+    }
+    return buf;
   }
 //==========================================================
   void input()      const { for (auto& p : pins) p.input(); }
@@ -67,10 +84,10 @@ public:
   void opendrain()  const { for (auto& p : pins) p.opendrain(); }
 
   void pwmio(int res, int freq)               const { for (auto& p : pins) p.pwmio(res, freq); }
-  void adcio(int res, adc_attenuation_t attn) const { for (auto& p : pins) p.adcio(res, attn); }
-  
-  void set(int bitmask) {
-    for(int i = N-1; i > -1; i--) {
+  void adcio(int res, adc_attenuation_t attn) const { for (auto& p : pins) p.adcio(res, attn); }  
+//==========================================================
+  void set(int firstpin, int bitmask) {
+    for(int i = N-1; i >= firstpin; i--) {
       pins[i].set(bitmask & 1);
       bitmask = bitmask>>1;
     }
